@@ -1,5 +1,5 @@
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/06/16 15:21:35
-template.asm						     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 15:10:48
+Pong.asm						     Page 1 - 1
 
 
 				; 32-bit assembly language template
@@ -27,89 +27,89 @@ template.asm						     Page 1 - 1
 
  00000000 00000000		COUNT DWORD ?
 
- 00000004  00000064 [		Array2d		BYTE 100 DUP('a')
-	    61
+ 00000004  00000064 [		Array2d		BYTE 100 DUP('-')
+	    2D
 	   ]
- 00000068  00000064 [					BYTE 100 DUP('b')
-	    62
+ 00000068  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000000CC  00000064 [					BYTE 100 DUP('c')
-	    63
+ 000000CC  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000130  00000064 [					BYTE 100 DUP('d')
-	    64
+ 00000130  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000194  00000064 [					BYTE 100 DUP('e')
-	    65
+ 00000194  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000001F8  00000064 [					BYTE 100 DUP('f')
-	    66
+ 000001F8  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 0000025C  00000064 [					BYTE 100 DUP('g')
-	    67
+ 0000025C  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000002C0  00000064 [					BYTE 100 DUP('h')
-	    68
+ 000002C0  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000324  00000064 [					BYTE 100 DUP('i')
-	    69
+ 00000324  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000388  00000064 [					BYTE 100 DUP('j')
-	    6A
+ 00000388  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000003EC  00000064 [					BYTE 100 DUP('k')
-	    6B
+ 000003EC  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000450  00000064 [					BYTE 100 DUP('l')
-	    6C
+ 00000450  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000004B4  00000064 [					BYTE 100 DUP('a')
-	    61
+ 000004B4  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000518  00000064 [					BYTE 100 DUP('b')
-	    62
+ 00000518  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 0000057C  00000064 [					BYTE 100 DUP('c')
-	    63
+ 0000057C  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000005E0  00000064 [					BYTE 100 DUP('d')
-	    64
+ 000005E0  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000644  00000064 [					BYTE 100 DUP('e')
-	    65
+ 00000644  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000006A8  00000064 [					BYTE 100 DUP('f')
-	    66
+ 000006A8  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 0000070C  00000064 [					BYTE 100 DUP('g')
-	    67
+ 0000070C  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000770  00000064 [					BYTE 100 DUP('h')
-	    68
+ 00000770  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000007D4  00000064 [					BYTE 100 DUP('i')
-	    69
+ 000007D4  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000838  00000064 [					BYTE 100 DUP('j')
-	    6A
+ 00000838  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 0000089C  00000064 [					BYTE 100 DUP('k')
-	    6B
+ 0000089C  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000900  00000064 [					BYTE 100 DUP('l')
-	    6C
+ 00000900  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000964  00000064 [					BYTE 100 DUP('i')
-	    69
+ 00000964  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 000009C8  00000064 [					BYTE 100 DUP('j')
-	    6A
+ 000009C8  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000A2C  00000064 [					BYTE 100 DUP('k')
-	    6B
+ 00000A2C  00000064 [					BYTE 100 DUP(' ')
+	    20
 	   ]
- 00000A90  00000064 [					BYTE 100 DUP('l')
-	    6C
+ 00000A90  00000064 [					BYTE 100 DUP('-')
+	    2D
 	   ]
 
  = 00000064			ArraySize = 100
@@ -130,36 +130,40 @@ template.asm						     Page 1 - 1
  0000000D				L1:
  0000000D  51					push ecx					;Maintain the state of ecx while we go into the next loop
  0000000E  B9 00000064				mov ecx, ArraySize			;Loop through the size of the sub array
- 00000013					L2:
- 00000013  8A 86 00000004 R				mov al,Array2d+[esi]	;Mov value of Array2d into lower half of register eax
- 00000019  E8 00000000 E				call WriteChar			;Write the character to the screen
- 0000001E  46						inc esi					;This needs to only be incremented here because it's technically a linear array
- 0000001F  E2 F2				LOOP L2
- 00000021  59					pop ecx						;Restore the state of ecx so we can continue looping through L1
+ 00000013  B0 7C				mov al, '|'
+ 00000015  E8 00000000 E			call WriteChar
+ 0000001A					L2:
+ 0000001A  8A 86 00000004 R				mov al,Array2d+[esi]	;Mov value of Array2d into lower half of register eax
+ 00000020  E8 00000000 E				call WriteChar			;Write the character to the screen
+ 00000025  46						inc esi					;This needs to only be incremented here because it's technically a linear array
+ 00000026  E2 F2				LOOP L2
+ 00000028  59					pop ecx						;Restore the state of ecx so we can continue looping through L1
+ 00000029  B0 7C				mov al, '|'
+ 0000002B  E8 00000000 E			call WriteChar
+ 00000030  E8 00000000 E			call crlf					;Get a new line
 
- 00000022  E8 00000000 E			call crlf					;Get a new line
- 00000027  E2 E4			LOOP L1
+ 00000035  E2 D6			LOOP L1
 
 					;Restore the registers
- 00000029  58				pop eax
- 0000002A  59				pop ecx
- 0000002B  5E				pop esi
+ 00000037  58				pop eax
+ 00000038  59				pop ecx
+ 00000039  5E				pop esi
 
- 0000002C  C3				ret
- 0000002D			drawBoard endp
+ 0000003A  C3				ret
+ 0000003B			drawBoard endp
 
 
- 0000002D			main proc
+ 0000003B			main proc
 
- 0000002D  E8 FFFFFFCE			call drawBoard
+ 0000003B  E8 FFFFFFC0			call drawBoard
 
 					invoke ExitProcess,0
- 00000032  6A 00	   *	    push   +000000000h
- 00000034  E8 00000000 E   *	    call   ExitProcess
- 00000039			main endp
+ 00000040  6A 00	   *	    push   +000000000h
+ 00000042  E8 00000000 E   *	    call   ExitProcess
+ 00000047			main endp
 				end main
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/06/16 15:21:35
-template.asm						     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 15:10:48
+Pong.asm						     Symbols 2 - 1
 
 
 
@@ -253,7 +257,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 00000AF4 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000039 Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000047 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -360,10 +364,10 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-drawBoard  . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000002D Public STDCALL
+drawBoard  . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000003B Public STDCALL
   L1 . . . . . . . . . . . . . .	L Near	 0000000D _TEXT	
-  L2 . . . . . . . . . . . . . .	L Near	 00000013 _TEXT	
-main . . . . . . . . . . . . . .	P Near	 0000002D _TEXT	Length= 0000000C Public STDCALL
+  L2 . . . . . . . . . . . . . .	L Near	 0000001A _TEXT	
+main . . . . . . . . . . . . . .	P Near	 0000003B _TEXT	Length= 0000000C Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
