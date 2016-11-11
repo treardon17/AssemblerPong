@@ -43,6 +43,36 @@ NumArrays = 28
 
 .code
 
+;We should eventually make this into a queue listener
+InstructionListener proc
+	push ecx
+	mov ecx, 500000000
+
+	L1:
+		;Do listening stuff here
+	Loop L1
+
+	pop ecx
+	ret
+InstructionListener ENDP
+
+ClearScreen proc
+	;tell the console to clear the screen before printing
+	push ecx
+	push ebx
+	push eax
+
+	mov ecx, NumArrays + 10
+
+	L1:
+		call crlf
+	Loop L1
+
+	pop eax
+	pop ebx
+	pop ecx
+	ret
+ClearScreen ENDP
 
 ;Adds an item to the back of the queue
 IQPushBack proc, instruction:BYTE
@@ -87,7 +117,8 @@ IQPopFront proc
 IQPopFront ENDP
 
 ;This function draws the board to the screen
-drawBoard proc
+DrawBoard proc
+
 	;Save the registers
 	push esi
 	push ecx
@@ -124,8 +155,12 @@ drawBoard endp
 
 main proc
 
-	;call drawBoard
-
+	mov ecx, 100000000
+	L1:
+		call DrawBoard
+		call InstructionListener
+		call ClearScreen
+	Loop L1
 
 	push 'b'
 	call IQPushBack
