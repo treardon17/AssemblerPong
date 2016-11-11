@@ -4,10 +4,10 @@ INCLUDE Irvine32.inc
 
 .data
 
-IQueue BYTE 1000 DUP(0)
-IQCount DWORD 0
-IQStart DWORD 0
-IQEnd DWORD 0
+IQueue BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
+IQCount DWORD 0						;The number of elements stored in the array
+IQStart DWORD 0						;The starting index of the queue
+IQEnd DWORD 0						;The ending index of the queue
 
 Array2d		BYTE 100 DUP('-')
 			BYTE 100 DUP(' ')
@@ -43,33 +43,44 @@ NumArrays = 28
 
 .code
 
+
+;Adds an item to the back of the queue
 IQPushBack proc, instruction:BYTE
+
+	;If the queue is empty, move the start of the queue to the first spot in the array
 	.IF IQCount == 0
 		mov IQStart, 0
 	.ENDIF
 
-	xor eax, eax
-	mov esi, IQEnd
-	mov al, instruction
-	mov IQueue[esi], al
-	inc IQCount
+	xor eax, eax				;zero out the eax register
+	mov esi, IQEnd				;tell esi where the end of the array is
+	mov al, instruction			;tell al what the instruction is
+	mov IQueue[esi], al			;move the instruction to the last place in the array
+	inc IQCount					;increment the number of items we have stored in the array
 	inc IQEnd
+
+	
+	.IF IQEnd > 1000			;if the end of the array is greater than the max size of the array
+		mov IQEnd, 0			;set the end of the array to be the first item in the array
+	.ENDIF
+
 	ret
 IQPushBack ENDP
 
+;Takes the first item from the queue
 IQPopFront proc
-	xor eax, eax
-	.IF IQCount > 0
-		mov esi, IQStart
-		mov al, IQueue[esi]
-		mov IQueue[esi], 0
-		inc esi
-		.IF esi > 1000
-			mov IQStart, 0
+	xor eax, eax				;zero out the eax register
+	.IF IQCount > 0				;if there is an item in the array
+		mov esi, IQStart		;tell esi where the start of the queue is 
+		mov al, IQueue[esi]		;get the first item in the queue
+		mov IQueue[esi], 0		;zero out the first item in the queue
+		inc esi					;increment esi to see if it's larger than the max size
+		.IF esi > 1000			;if it's greater than the max size
+			mov IQStart, 0		;move the start to zero
 		.ELSE
-			mov IQStart, esi
+			mov IQStart, esi	;otherwise increment the start of the array
 		.ENDIF
-		dec IQCount
+		dec IQCount				;decrease the count of the array
 	.ENDIF
 	
 	ret
