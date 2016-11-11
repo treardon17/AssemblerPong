@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 16:53:56
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 17:43:26
 Pong.asm						     Page 1 - 1
 
 
@@ -25,12 +25,12 @@ Pong.asm						     Page 1 - 1
 
  00000000			.data
 
- 00000000  000003E8 [		IQueue BYTE 1000 DUP(0)
+ 00000000  000003E8 [		IQueue BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
 	    00
 	   ]
- 000003E8 00000000		IQCount DWORD 0
- 000003EC 00000000		IQStart DWORD 0
- 000003F0 00000000		IQEnd DWORD 0
+ 000003E8 00000000		IQCount DWORD 0						;The number of elements stored in the array
+ 000003EC 00000000		IQStart DWORD 0						;The starting index of the queue
+ 000003F0 00000000		IQEnd DWORD 0						;The ending index of the queue
 
  000003F4  00000064 [		Array2d		BYTE 100 DUP('-')
 	    2D
@@ -122,118 +122,168 @@ Pong.asm						     Page 1 - 1
 
  00000000			.code
 
- 00000000			IQPushBack proc, instruction:BYTE
- 00000000  55		   *	    push   ebp
- 00000001  8B EC	   *	    mov    ebp, esp
+ 00000000			PauseProc proc
+ 00000000  51				push ecx
+
+ 00000001  B9 1DCD6500			mov ecx, 500000000
+
+ 00000006				L1:
+ 00000006  E2 FE			Loop L1
+
+ 00000008  59				pop ecx
+ 00000009  C3				ret
+ 0000000A			PauseProc ENDP
+
+ 0000000A			ClearScreen proc
+					;tell the console to clear the screen before printing
+ 0000000A  51				push ecx
+ 0000000B  53				push ebx
+ 0000000C  50				push eax
+
+ 0000000D  B9 00000026			mov ecx, NumArrays + 10
+
+ 00000012				L1:
+ 00000012  E8 00000000 E			call crlf
+ 00000017  E2 F9			Loop L1
+
+ 00000019  58				pop eax
+ 0000001A  5B				pop ebx
+ 0000001B  59				pop ecx
+ 0000001C  C3				ret
+ 0000001D			ClearScreen ENDP
+
+				;Adds an item to the back of the queue
+ 0000001D			IQPushBack proc, instruction:BYTE
+
+					;If the queue is empty, move the start of the queue to the first spot in the array
+ 0000001D  55		   *	    push   ebp
+ 0000001E  8B EC	   *	    mov    ebp, esp
 					.IF IQCount == 0
- 00000003  83 3D 000003E8 R
+ 00000020  83 3D 000003E8 R
 	   00		   *	    cmp    IQCount, 000h
- 0000000A  75 0A	   *	    jne    @C0001
- 0000000C  C7 05 000003EC R			mov IQStart, 0
+ 00000027  75 0A	   *	    jne    @C0001
+ 00000029  C7 05 000003EC R			mov IQStart, 0
 	   00000000
 					.ENDIF
- 00000016		   *@C0001:
+ 00000033		   *@C0001:
 
- 00000016  33 C0			xor eax, eax
- 00000018  8B 35 000003F0 R		mov esi, IQEnd
- 0000001E  8A 45 08			mov al, instruction
- 00000021  88 86 00000000 R		mov IQueue[esi], al
- 00000027  FF 05 000003E8 R		inc IQCount
- 0000002D  FF 05 000003F0 R		inc IQEnd
+ 00000033  33 C0			xor eax, eax				;zero out the eax register
+ 00000035  8B 35 000003F0 R		mov esi, IQEnd				;tell esi where the end of the array is
+ 0000003B  8A 45 08			mov al, instruction			;tell al what the instruction is
+ 0000003E  88 86 00000000 R		mov IQueue[esi], al			;move the instruction to the last place in the array
+ 00000044  FF 05 000003E8 R		inc IQCount					;increment the number of items we have stored in the array
+ 0000004A  FF 05 000003F0 R		inc IQEnd
+
+					
+					.IF IQEnd > 1000			;if the end of the array is greater than the max size of the array
+ 00000050  81 3D 000003F0 R
+	   000003E8	   *	    cmp    IQEnd, 003E8h
+ 0000005A  76 0A	   *	    jbe    @C0003
+ 0000005C  C7 05 000003F0 R			mov IQEnd, 0			;set the end of the array to be the first item in the array
+	   00000000
+					.ENDIF
+ 00000066		   *@C0003:
+
 					ret
- 00000033  C9		   *	    leave  
- 00000034  C2 0004	   *	    ret    00004h
- 00000037			IQPushBack ENDP
+ 00000066  C9		   *	    leave  
+ 00000067  C2 0004	   *	    ret    00004h
+ 0000006A			IQPushBack ENDP
 
- 00000037			IQPopFront proc
- 00000037  33 C0			xor eax, eax
-					.IF IQCount > 0
- 00000039  83 3D 000003E8 R
+				;Takes the first item from the queue
+ 0000006A			IQPopFront proc
+ 0000006A  33 C0			xor eax, eax				;zero out the eax register
+					.IF IQCount > 0				;if there is an item in the array
+ 0000006C  83 3D 000003E8 R
 	   00		   *	    cmp    IQCount, 000h
- 00000040  76 34	   *	    jbe    @C0003
- 00000042  8B 35 000003EC R			mov esi, IQStart
- 00000048  8A 86 00000000 R			mov al, IQueue[esi]
- 0000004E  C6 86 00000000 R			mov IQueue[esi], 0
+ 00000073  76 34	   *	    jbe    @C0005
+ 00000075  8B 35 000003EC R			mov esi, IQStart		;tell esi where the start of the queue is 
+ 0000007B  8A 86 00000000 R			mov al, IQueue[esi]		;get the first item in the queue
+ 00000081  C6 86 00000000 R			mov IQueue[esi], 0		;zero out the first item in the queue
 	   00
- 00000055  46					inc esi
-						.IF esi > 1000
- 00000056  81 FE 000003E8  *	    cmp    esi, 003E8h
- 0000005C  76 0C	   *	    jbe    @C0005
- 0000005E  C7 05 000003EC R				mov IQStart, 0
+ 00000088  46					inc esi					;increment esi to see if it's larger than the max size
+						.IF esi > 1000			;if it's greater than the max size
+ 00000089  81 FE 000003E8  *	    cmp    esi, 003E8h
+ 0000008F  76 0C	   *	    jbe    @C0007
+ 00000091  C7 05 000003EC R				mov IQStart, 0		;move the start to zero
 	   00000000
 						.ELSE
- 00000068  EB 06	   *	    jmp    @C0007
- 0000006A		   *@C0005:
- 0000006A  89 35 000003EC R				mov IQStart, esi
+ 0000009B  EB 06	   *	    jmp    @C0009
+ 0000009D		   *@C0007:
+ 0000009D  89 35 000003EC R				mov IQStart, esi	;otherwise increment the start of the array
 						.ENDIF
- 00000070		   *@C0007:
- 00000070  FF 0D 000003E8 R			dec IQCount
+ 000000A3		   *@C0009:
+ 000000A3  FF 0D 000003E8 R			dec IQCount				;decrease the count of the array
 					.ENDIF
- 00000076		   *@C0003:
+ 000000A9		   *@C0005:
 					
- 00000076  C3				ret
- 00000077			IQPopFront ENDP
+ 000000A9  C3				ret
+ 000000AA			IQPopFront ENDP
 
 				;This function draws the board to the screen
- 00000077			drawBoard proc
+ 000000AA			DrawBoard proc
+
 					;Save the registers
- 00000077  56				push esi
- 00000078  51				push ecx
- 00000079  50				push eax
+ 000000AA  56				push esi
+ 000000AB  51				push ecx
+ 000000AC  50				push eax
 
- 0000007A  BE 00000000			mov esi,0						;Set the index to be zero
- 0000007F  B9 0000001C			mov ecx, NumArrays				;Loop through the first loop the # of outer arrays we have
+ 000000AD  BE 00000000			mov esi,0						;Set the index to be zero
+ 000000B2  B9 0000001C			mov ecx, NumArrays				;Loop through the first loop the # of outer arrays we have
 
- 00000084				L1:
- 00000084  51					push ecx					;Maintain the state of ecx while we go into the next loop
- 00000085  B9 00000064				mov ecx, ArraySize			;Loop through the size of the sub array
- 0000008A  B0 7C				mov al, '|'
- 0000008C  E8 00000000 E			call WriteChar
- 00000091					L2:
- 00000091  8A 86 000003F4 R				mov al,Array2d[esi]	;Mov value of Array2d into lower half of register eax
- 00000097  E8 00000000 E				call WriteChar			;Write the character to the screen
- 0000009C  46						inc esi					;This needs to only be incremented here because it's technically a linear array
- 0000009D  E2 F2				LOOP L2
- 0000009F  59					pop ecx						;Restore the state of ecx so we can continue looping through L1
- 000000A0  B0 7C				mov al, '|'
- 000000A2  E8 00000000 E			call WriteChar
- 000000A7  E8 00000000 E			call crlf					;Get a new line
+ 000000B7				L1:
+ 000000B7  51					push ecx					;Maintain the state of ecx while we go into the next loop
+ 000000B8  B9 00000064				mov ecx, ArraySize			;Loop through the size of the sub array
+ 000000BD  B0 7C				mov al, '|'
+ 000000BF  E8 00000000 E			call WriteChar
+ 000000C4					L2:
+ 000000C4  8A 86 000003F4 R				mov al,Array2d[esi]	;Mov value of Array2d into lower half of register eax
+ 000000CA  E8 00000000 E				call WriteChar			;Write the character to the screen
+ 000000CF  46						inc esi					;This needs to only be incremented here because it's technically a linear array
+ 000000D0  E2 F2				LOOP L2
+ 000000D2  59					pop ecx						;Restore the state of ecx so we can continue looping through L1
+ 000000D3  B0 7C				mov al, '|'
+ 000000D5  E8 00000000 E			call WriteChar
+ 000000DA  E8 00000000 E			call crlf					;Get a new line
 
- 000000AC  E2 D6			LOOP L1
+ 000000DF  E2 D6			LOOP L1
 
 					;Restore the registers
- 000000AE  58				pop eax
- 000000AF  59				pop ecx
- 000000B0  5E				pop esi
+ 000000E1  58				pop eax
+ 000000E2  59				pop ecx
+ 000000E3  5E				pop esi
 
- 000000B1  C3				ret
- 000000B2			drawBoard endp
-
-
- 000000B2			main proc
-
-					;call drawBoard
+ 000000E4  C3				ret
+ 000000E5			drawBoard endp
 
 
- 000000B2  6A 62			push 'b'
- 000000B4  E8 FFFFFF47			call IQPushBack
+ 000000E5			main proc
 
- 000000B9  6A 61			push 'a'
- 000000BB  E8 FFFFFF40			call IQPushBack
+ 000000E5  B9 05F5E100			mov ecx, 100000000
+ 000000EA				L1:
+ 000000EA  E8 FFFFFFBB				call DrawBoard
+ 000000EF  E8 FFFFFF0C				call PauseProc
+ 000000F4  E8 FFFFFF11				call ClearScreen
+ 000000F9  E2 EF			Loop L1
 
- 000000C0  6A 63			push 'c'
- 000000C2  E8 FFFFFF39			call IQPushBack
+ 000000FB  6A 62			push 'b'
+ 000000FD  E8 FFFFFF1B			call IQPushBack
 
- 000000C7  E8 FFFFFF6B			call IQPopFront
- 000000CC  E8 FFFFFF66			call IQPopFront
- 000000D1  E8 FFFFFF61			call IQPopFront
+ 00000102  6A 61			push 'a'
+ 00000104  E8 FFFFFF14			call IQPushBack
+
+ 00000109  6A 63			push 'c'
+ 0000010B  E8 FFFFFF0D			call IQPushBack
+
+ 00000110  E8 FFFFFF55			call IQPopFront
+ 00000115  E8 FFFFFF50			call IQPopFront
+ 0000011A  E8 FFFFFF4B			call IQPopFront
 
 					invoke ExitProcess,0
- 000000D6  6A 00	   *	    push   +000000000h
- 000000D8  E8 00000000 E   *	    call   ExitProcess
- 000000DD			main endp
+ 0000011F  6A 00	   *	    push   +000000000h
+ 00000121  E8 00000000 E   *	    call   ExitProcess
+ 00000126			main endp
 				end main
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 16:53:56
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 17:43:26
 Pong.asm						     Symbols 2 - 1
 
 
@@ -328,13 +378,15 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 00000EE4 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000000DD Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000126 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
 
                 N a m e                 Type     Value    Attr
 
+ClearScreen  . . . . . . . . . .	P Near	 0000000A _TEXT	Length= 00000013 Public STDCALL
+  L1 . . . . . . . . . . . . . .	L Near	 00000012 _TEXT	
 CloseFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -342,6 +394,9 @@ CreateFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 CreateOutputFile . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Crlf . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Delay  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DrawBoard  . . . . . . . . . . .	P Near	 000000AA _TEXT	Length= 0000003B Public STDCALL
+  L1 . . . . . . . . . . . . . .	L Near	 000000B7 _TEXT	
+  L2 . . . . . . . . . . . . . .	L Near	 000000C4 _TEXT	
 DumpMem  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 DumpRegs . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ExitProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -374,8 +429,8 @@ HeapCreate . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 HeapDestroy  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapFree . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapSize . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-IQPopFront . . . . . . . . . . .	P Near	 00000037 _TEXT	Length= 00000040 Public STDCALL
-IQPushBack . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000037 Public STDCALL
+IQPopFront . . . . . . . . . . .	P Near	 0000006A _TEXT	Length= 00000040 Public STDCALL
+IQPushBack . . . . . . . . . . .	P Near	 0000001D _TEXT	Length= 0000004D Public STDCALL
   instruction  . . . . . . . . .	Byte	 bp + 00000008
 IsDigit  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 LocalFree  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -385,6 +440,8 @@ MsgBox . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 OpenInputFile  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ParseDecimal32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ParseInteger32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PauseProc  . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000000A Public STDCALL
+  L1 . . . . . . . . . . . . . .	L Near	 00000006 _TEXT	
 PeekConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Random32 . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 RandomRange  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -438,10 +495,8 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-drawBoard  . . . . . . . . . . .	P Near	 00000077 _TEXT	Length= 0000003B Public STDCALL
-  L1 . . . . . . . . . . . . . .	L Near	 00000084 _TEXT	
-  L2 . . . . . . . . . . . . . .	L Near	 00000091 _TEXT	
-main . . . . . . . . . . . . . .	P Near	 000000B2 _TEXT	Length= 0000002B Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 000000E5 _TEXT	Length= 00000041 Public STDCALL
+  L1 . . . . . . . . . . . . . .	L Near	 000000EA _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
