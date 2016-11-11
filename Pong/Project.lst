@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 15:10:48
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 16:53:56
 Pong.asm						     Page 1 - 1
 
 
@@ -25,90 +25,95 @@ Pong.asm						     Page 1 - 1
 
  00000000			.data
 
- 00000000 00000000		COUNT DWORD ?
+ 00000000  000003E8 [		IQueue BYTE 1000 DUP(0)
+	    00
+	   ]
+ 000003E8 00000000		IQCount DWORD 0
+ 000003EC 00000000		IQStart DWORD 0
+ 000003F0 00000000		IQEnd DWORD 0
 
- 00000004  00000064 [		Array2d		BYTE 100 DUP('-')
+ 000003F4  00000064 [		Array2d		BYTE 100 DUP('-')
 	    2D
 	   ]
- 00000068  00000064 [					BYTE 100 DUP(' ')
+ 00000458  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000000CC  00000064 [					BYTE 100 DUP(' ')
+ 000004BC  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000130  00000064 [					BYTE 100 DUP(' ')
+ 00000520  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000194  00000064 [					BYTE 100 DUP(' ')
+ 00000584  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000001F8  00000064 [					BYTE 100 DUP(' ')
+ 000005E8  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 0000025C  00000064 [					BYTE 100 DUP(' ')
+ 0000064C  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000002C0  00000064 [					BYTE 100 DUP(' ')
+ 000006B0  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000324  00000064 [					BYTE 100 DUP(' ')
+ 00000714  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000388  00000064 [					BYTE 100 DUP(' ')
+ 00000778  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000003EC  00000064 [					BYTE 100 DUP(' ')
+ 000007DC  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000450  00000064 [					BYTE 100 DUP(' ')
+ 00000840  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000004B4  00000064 [					BYTE 100 DUP(' ')
+ 000008A4  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000518  00000064 [					BYTE 100 DUP(' ')
+ 00000908  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 0000057C  00000064 [					BYTE 100 DUP(' ')
+ 0000096C  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000005E0  00000064 [					BYTE 100 DUP(' ')
+ 000009D0  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000644  00000064 [					BYTE 100 DUP(' ')
+ 00000A34  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000006A8  00000064 [					BYTE 100 DUP(' ')
+ 00000A98  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 0000070C  00000064 [					BYTE 100 DUP(' ')
+ 00000AFC  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000770  00000064 [					BYTE 100 DUP(' ')
+ 00000B60  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000007D4  00000064 [					BYTE 100 DUP(' ')
+ 00000BC4  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000838  00000064 [					BYTE 100 DUP(' ')
+ 00000C28  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 0000089C  00000064 [					BYTE 100 DUP(' ')
+ 00000C8C  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000900  00000064 [					BYTE 100 DUP(' ')
+ 00000CF0  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000964  00000064 [					BYTE 100 DUP(' ')
+ 00000D54  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 000009C8  00000064 [					BYTE 100 DUP(' ')
+ 00000DB8  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000A2C  00000064 [					BYTE 100 DUP(' ')
+ 00000E1C  00000064 [					BYTE 100 DUP(' ')
 	    20
 	   ]
- 00000A90  00000064 [					BYTE 100 DUP('-')
+ 00000E80  00000064 [					BYTE 100 DUP('-')
 	    2D
 	   ]
 
@@ -117,52 +122,118 @@ Pong.asm						     Page 1 - 1
 
  00000000			.code
 
+ 00000000			IQPushBack proc, instruction:BYTE
+ 00000000  55		   *	    push   ebp
+ 00000001  8B EC	   *	    mov    ebp, esp
+					.IF IQCount == 0
+ 00000003  83 3D 000003E8 R
+	   00		   *	    cmp    IQCount, 000h
+ 0000000A  75 0A	   *	    jne    @C0001
+ 0000000C  C7 05 000003EC R			mov IQStart, 0
+	   00000000
+					.ENDIF
+ 00000016		   *@C0001:
+
+ 00000016  33 C0			xor eax, eax
+ 00000018  8B 35 000003F0 R		mov esi, IQEnd
+ 0000001E  8A 45 08			mov al, instruction
+ 00000021  88 86 00000000 R		mov IQueue[esi], al
+ 00000027  FF 05 000003E8 R		inc IQCount
+ 0000002D  FF 05 000003F0 R		inc IQEnd
+					ret
+ 00000033  C9		   *	    leave  
+ 00000034  C2 0004	   *	    ret    00004h
+ 00000037			IQPushBack ENDP
+
+ 00000037			IQPopFront proc
+ 00000037  33 C0			xor eax, eax
+					.IF IQCount > 0
+ 00000039  83 3D 000003E8 R
+	   00		   *	    cmp    IQCount, 000h
+ 00000040  76 34	   *	    jbe    @C0003
+ 00000042  8B 35 000003EC R			mov esi, IQStart
+ 00000048  8A 86 00000000 R			mov al, IQueue[esi]
+ 0000004E  C6 86 00000000 R			mov IQueue[esi], 0
+	   00
+ 00000055  46					inc esi
+						.IF esi > 1000
+ 00000056  81 FE 000003E8  *	    cmp    esi, 003E8h
+ 0000005C  76 0C	   *	    jbe    @C0005
+ 0000005E  C7 05 000003EC R				mov IQStart, 0
+	   00000000
+						.ELSE
+ 00000068  EB 06	   *	    jmp    @C0007
+ 0000006A		   *@C0005:
+ 0000006A  89 35 000003EC R				mov IQStart, esi
+						.ENDIF
+ 00000070		   *@C0007:
+ 00000070  FF 0D 000003E8 R			dec IQCount
+					.ENDIF
+ 00000076		   *@C0003:
+					
+ 00000076  C3				ret
+ 00000077			IQPopFront ENDP
+
 				;This function draws the board to the screen
- 00000000			drawBoard proc
+ 00000077			drawBoard proc
 					;Save the registers
- 00000000  56				push esi
- 00000001  51				push ecx
- 00000002  50				push eax
+ 00000077  56				push esi
+ 00000078  51				push ecx
+ 00000079  50				push eax
 
- 00000003  BE 00000000			mov esi,0						;Set the index to be zero
- 00000008  B9 0000001C			mov ecx, NumArrays				;Loop through the first loop the # of outer arrays we have
+ 0000007A  BE 00000000			mov esi,0						;Set the index to be zero
+ 0000007F  B9 0000001C			mov ecx, NumArrays				;Loop through the first loop the # of outer arrays we have
 
- 0000000D				L1:
- 0000000D  51					push ecx					;Maintain the state of ecx while we go into the next loop
- 0000000E  B9 00000064				mov ecx, ArraySize			;Loop through the size of the sub array
- 00000013  B0 7C				mov al, '|'
- 00000015  E8 00000000 E			call WriteChar
- 0000001A					L2:
- 0000001A  8A 86 00000004 R				mov al,Array2d+[esi]	;Mov value of Array2d into lower half of register eax
- 00000020  E8 00000000 E				call WriteChar			;Write the character to the screen
- 00000025  46						inc esi					;This needs to only be incremented here because it's technically a linear array
- 00000026  E2 F2				LOOP L2
- 00000028  59					pop ecx						;Restore the state of ecx so we can continue looping through L1
- 00000029  B0 7C				mov al, '|'
- 0000002B  E8 00000000 E			call WriteChar
- 00000030  E8 00000000 E			call crlf					;Get a new line
+ 00000084				L1:
+ 00000084  51					push ecx					;Maintain the state of ecx while we go into the next loop
+ 00000085  B9 00000064				mov ecx, ArraySize			;Loop through the size of the sub array
+ 0000008A  B0 7C				mov al, '|'
+ 0000008C  E8 00000000 E			call WriteChar
+ 00000091					L2:
+ 00000091  8A 86 000003F4 R				mov al,Array2d[esi]	;Mov value of Array2d into lower half of register eax
+ 00000097  E8 00000000 E				call WriteChar			;Write the character to the screen
+ 0000009C  46						inc esi					;This needs to only be incremented here because it's technically a linear array
+ 0000009D  E2 F2				LOOP L2
+ 0000009F  59					pop ecx						;Restore the state of ecx so we can continue looping through L1
+ 000000A0  B0 7C				mov al, '|'
+ 000000A2  E8 00000000 E			call WriteChar
+ 000000A7  E8 00000000 E			call crlf					;Get a new line
 
- 00000035  E2 D6			LOOP L1
+ 000000AC  E2 D6			LOOP L1
 
 					;Restore the registers
- 00000037  58				pop eax
- 00000038  59				pop ecx
- 00000039  5E				pop esi
+ 000000AE  58				pop eax
+ 000000AF  59				pop ecx
+ 000000B0  5E				pop esi
 
- 0000003A  C3				ret
- 0000003B			drawBoard endp
+ 000000B1  C3				ret
+ 000000B2			drawBoard endp
 
 
- 0000003B			main proc
+ 000000B2			main proc
 
- 0000003B  E8 FFFFFFC0			call drawBoard
+					;call drawBoard
+
+
+ 000000B2  6A 62			push 'b'
+ 000000B4  E8 FFFFFF47			call IQPushBack
+
+ 000000B9  6A 61			push 'a'
+ 000000BB  E8 FFFFFF40			call IQPushBack
+
+ 000000C0  6A 63			push 'c'
+ 000000C2  E8 FFFFFF39			call IQPushBack
+
+ 000000C7  E8 FFFFFF6B			call IQPopFront
+ 000000CC  E8 FFFFFF66			call IQPopFront
+ 000000D1  E8 FFFFFF61			call IQPopFront
 
 					invoke ExitProcess,0
- 00000040  6A 00	   *	    push   +000000000h
- 00000042  E8 00000000 E   *	    call   ExitProcess
- 00000047			main endp
+ 000000D6  6A 00	   *	    push   +000000000h
+ 000000D8  E8 00000000 E   *	    call   ExitProcess
+ 000000DD			main endp
 				end main
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 15:10:48
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/10/16 16:53:56
 Pong.asm						     Symbols 2 - 1
 
 
@@ -256,8 +327,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000AF4 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000047 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000EE4 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000000DD Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -303,6 +374,9 @@ HeapCreate . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 HeapDestroy  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapFree . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapSize . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IQPopFront . . . . . . . . . . .	P Near	 00000037 _TEXT	Length= 00000040 Public STDCALL
+IQPushBack . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000037 Public STDCALL
+  instruction  . . . . . . . . .	Byte	 bp + 00000008
 IsDigit  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 LocalFree  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MessageBoxA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -364,10 +438,10 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-drawBoard  . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000003B Public STDCALL
-  L1 . . . . . . . . . . . . . .	L Near	 0000000D _TEXT	
-  L2 . . . . . . . . . . . . . .	L Near	 0000001A _TEXT	
-main . . . . . . . . . . . . . .	P Near	 0000003B _TEXT	Length= 0000000C Public STDCALL
+drawBoard  . . . . . . . . . . .	P Near	 00000077 _TEXT	Length= 0000003B Public STDCALL
+  L1 . . . . . . . . . . . . . .	L Near	 00000084 _TEXT	
+  L2 . . . . . . . . . . . . . .	L Near	 00000091 _TEXT	
+main . . . . . . . . . . . . . .	P Near	 000000B2 _TEXT	Length= 0000002B Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -387,10 +461,9 @@ Symbols:
 @fardata . . . . . . . . . . . .	Text   	 FLAT
 @stack . . . . . . . . . . . . .	Text   	 FLAT
 ALT_MASK . . . . . . . . . . . .	Number	 00000003h   
-Array2d  . . . . . . . . . . . .	Byte	 00000004 _DATA	
+Array2d  . . . . . . . . . . . .	Byte	 000003F4 _DATA	
 ArraySize  . . . . . . . . . . .	Number	 00000064h   
 CAPSLOCK_ON  . . . . . . . . . .	Number	 00000080h   
-COUNT  . . . . . . . . . . . . .	DWord	 00000000 _DATA	
 CREATE_ALWAYS  . . . . . . . . .	Number	 00000002h   
 CREATE_NEW . . . . . . . . . . .	Number	 00000001h   
 CTRL_MASK  . . . . . . . . . . .	Number	 0000000Ch   
@@ -457,6 +530,10 @@ IDTIMEOUT  . . . . . . . . . . .	Number	 00007D00h
 IDTRYAGAIN . . . . . . . . . . .	Number	 0000000Ah   
 IDYES  . . . . . . . . . . . . .	Number	 00000006h   
 INVALID_HANDLE_VALUE . . . . . .	Number	 -00000001h   
+IQCount  . . . . . . . . . . . .	DWord	 000003E8 _DATA	
+IQEnd  . . . . . . . . . . . . .	DWord	 000003F0 _DATA	
+IQStart  . . . . . . . . . . . .	DWord	 000003EC _DATA	
+IQueue . . . . . . . . . . . . .	Byte	 00000000 _DATA	
 KBDOWN_FLAG  . . . . . . . . . .	Number	 00000001h   
 KEY_EVENT  . . . . . . . . . . .	Number	 00000001h   
 KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
