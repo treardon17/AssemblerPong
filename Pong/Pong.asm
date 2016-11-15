@@ -9,35 +9,6 @@ IQCount DWORD 0						;The number of elements stored in the array
 IQStart DWORD 0						;The starting index of the queue
 IQEnd DWORD 0						;The ending index of the queue
 
-Array2d		BYTE 100 DUP('-')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP(' ')
-			BYTE 100 DUP('-')
-
 ArraySize = 100
 NumArrays = 28
 
@@ -58,9 +29,7 @@ InstructionListener ENDP
 
 ClearScreen proc
 	;tell the console to clear the screen before printing
-	push ecx
-	push ebx
-	push eax
+	pushad
 
 	mov ecx, NumArrays + 10
 
@@ -68,9 +37,7 @@ ClearScreen proc
 		call crlf
 	Loop L1
 
-	pop eax
-	pop ebx
-	pop ecx
+	popad
 	ret
 ClearScreen ENDP
 
@@ -120,34 +87,43 @@ IQPopFront ENDP
 DrawBoard proc
 
 	;Save the registers
-	push esi
-	push ecx
-	push eax
-
-	mov esi,0						;Set the index to be zero
-	mov ecx, NumArrays				;Loop through the first loop the # of outer arrays we have
-
+	pushad
+	
+	mov dl, 0						;initial x value is 0
+	mov dh, 0						;initial y value is 0
+	call gotoxy						;set the cursor position to the xy position
+	
+	;First loop is rows
+	;Second loop is columns
+	mov ecx, NumArrays + 1
+	
 	L1:
-		push ecx					;Maintain the state of ecx while we go into the next loop
-		mov ecx, ArraySize			;Loop through the size of the sub array
-		mov al, '|'
-		call WriteChar
+		push ecx
+		mov ecx, ArraySize + 1
 		L2:
-			mov al,Array2d[esi]	;Mov value of Array2d into lower half of register eax
-			call WriteChar			;Write the character to the screen
-			inc esi					;This needs to only be incremented here because it's technically a linear array
-		LOOP L2
-		pop ecx						;Restore the state of ecx so we can continue looping through L1
-		mov al, '|'
-		call WriteChar
-		call crlf					;Get a new line
-
-	LOOP L1
+			
+			.IF (dl == 0) || (dl == ArraySize)
+				mov al, "|"
+				call WriteChar
+			.ELSEIF (dh == 0) || (dh == NumArrays)
+				mov al, "-"
+				call WriteChar
+			.ENDIF
+			
+			inc dl
+			call gotoxy
+			
+		Loop L2
+		
+		mov dl, 0
+		inc dh
+		call gotoxy
+		
+		pop ecx
+	Loop L1
 
 	;Restore the registers
-	pop eax
-	pop ecx
-	pop esi
+	popad
 
 	ret
 drawBoard endp
@@ -155,12 +131,12 @@ drawBoard endp
 
 main proc
 
-	mov ecx, 100000000
-	L1:
+	;mov ecx, 100000000
+	;L1:
 		call DrawBoard
-		call InstructionListener
-		call ClearScreen
-	Loop L1
+		;call InstructionListener
+		;call ClearScreen
+	;Loop L1
 
 	push 'b'
 	call IQPushBack
