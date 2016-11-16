@@ -4,13 +4,18 @@ INCLUDE Irvine32.inc
 
 .data
 
+;INSTRUCTION QUEUE VARIABLES
 IQueue BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
 IQCount DWORD 0						;The number of elements stored in the array
 IQStart DWORD 0						;The starting index of the queue
 IQEnd DWORD 0						;The ending index of the queue
 
-ArraySize = 100
-NumArrays = 28
+;BOARD STATE VARIABLES
+XCoords = 100						;the width of the board
+YCoords = 28						;the height of the board
+PaddleLength = 5					;the length of teh paddle
+LPCoords BYTE 0						;coordinates for the left paddle
+RPCoords BYTE 0						;coordinates for the right paddle
 
 .code
 
@@ -26,20 +31,6 @@ InstructionListener proc
 	pop ecx
 	ret
 InstructionListener ENDP
-
-ClearScreen proc
-	;tell the console to clear the screen before printing
-	pushad
-
-	mov ecx, NumArrays + 10
-
-	L1:
-		call crlf
-	Loop L1
-
-	popad
-	ret
-ClearScreen ENDP
 
 ;Adds an item to the back of the queue
 IQPushBack proc, instruction:BYTE
@@ -83,6 +74,38 @@ IQPopFront proc
 	ret
 IQPopFront ENDP
 
+DrawLP proc
+	pushad
+	xor edx, edx
+	mov dl, 1
+	mov dh, LPCoords
+	mov ecx, PaddleLength + 1
+	L1:
+		call gotoxy
+		mov al, "]"
+		call WriteChar
+		inc dh
+	Loop L1
+	popad
+	ret
+DrawLP endp
+
+DrawRP proc
+	pushad
+	xor edx, edx
+	mov dl, XCoords - 1
+	mov dh, RPCoords
+	mov ecx, PaddleLength + 1
+	L1:
+		call gotoxy
+		mov al, "["
+		call WriteChar
+		inc dh
+	Loop L1
+	popad
+	ret
+DrawRP endp
+
 ;This function draws the board to the screen
 DrawBoard proc
 
@@ -95,24 +118,22 @@ DrawBoard proc
 	
 	;First loop is rows
 	;Second loop is columns
-	mov ecx, NumArrays + 1
+	mov ecx, YCoords + 1
 	
 	L1:
 		push ecx
-		mov ecx, ArraySize + 1
+		mov ecx, XCoords + 1
 		L2:
-			
-			.IF (dl == 0) || (dl == ArraySize)
+			.IF (dl == 0) || (dl == XCoords)
 				mov al, "|"
 				call WriteChar
-			.ELSEIF (dh == 0) || (dh == NumArrays)
+			.ELSEIF (dh == 0) || (dh == YCoords)
 				mov al, "-"
 				call WriteChar
 			.ENDIF
 			
 			inc dl
 			call gotoxy
-			
 		Loop L2
 		
 		mov dl, 0
@@ -131,11 +152,11 @@ drawBoard endp
 
 main proc
 
-	;mov ecx, 100000000
 	;L1:
+		call DrawRP
+		call DrawLP
 		call DrawBoard
 		;call InstructionListener
-		;call ClearScreen
 	;Loop L1
 
 	push 'b'
