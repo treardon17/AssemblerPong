@@ -12,7 +12,7 @@ IQEnd DWORD 0						;The ending index of the queue
 
 ;BOARD STATE VARIABLES
 XCoords = 100						;the width of the board
-YCoords = 28						;the height of the board
+YCoords = 25						;the height of the board
 PaddleLength = 5					;the length of teh paddle
 LPCoords BYTE 0						;coordinates for the left paddle
 RPCoords BYTE 0						;coordinates for the right paddle
@@ -100,6 +100,9 @@ DrawLP proc
 		call WriteChar
 		inc dh
 	Loop L1
+
+	call SetCursorToRead
+
 	popad
 	ret
 DrawLP endp
@@ -130,6 +133,9 @@ DrawRP proc
 		call WriteChar
 		inc dh
 	Loop L1
+
+	call SetCursorToRead
+
 	popad
 	ret
 DrawRP endp
@@ -170,6 +176,8 @@ DrawBoard proc
 		call gotoxy
 		pop ecx
 	Loop L1
+	
+	call SetCursorToRead
 
 	;Restore the registers
 	popad
@@ -183,12 +191,26 @@ DrawFullBoard proc
 	ret
 DrawFullBoard endp
 
+SetCursorToRead proc
+	pushad
+	mov dl, 0
+	mov dh, YCoords
+	add dh, 2
+	call gotoxy
+	popad
+	ret
+SetCursorToRead endp
+
 main proc
 
 	L1:
 		call DrawFullBoard
-		inc LPCoords
-		inc RPCoords
+		call ReadInt
+		.IF (eax == 1)
+			inc RPCoords
+		.ELSEIF (eax == 2)
+			dec RPCoords
+		.ENDIF
 		;call InstructionListener
 	Loop L1
 
