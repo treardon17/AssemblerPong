@@ -76,6 +76,20 @@ IQPopFront ENDP
 
 DrawLP proc
 	pushad
+
+	xor eax, eax
+	mov al, LPCoords
+	add al, PaddleLength
+
+	.IF (eax >= YCoords)
+		mov al, YCoords
+		sub al, PaddleLength
+		sub al, 1
+		mov LPCoords, al
+	.ELSEIF (LPCoords <= 1)
+		mov LPCoords, 1
+	.ENDIF
+
 	xor edx, edx
 	mov dl, 1
 	mov dh, LPCoords
@@ -92,6 +106,20 @@ DrawLP endp
 
 DrawRP proc
 	pushad
+
+	xor eax, eax
+	mov al, RPCoords
+	add al, PaddleLength
+
+	.IF (eax >= YCoords)
+		mov al, YCoords
+		sub al, PaddleLength
+		sub al, 1
+		mov RPCoords, al
+	.ELSEIF (RPCoords <= 1)
+		mov RPCoords, 1
+	.ENDIF
+
 	xor edx, edx
 	mov dl, XCoords - 1
 	mov dh, RPCoords
@@ -108,10 +136,8 @@ DrawRP endp
 
 ;This function draws the board to the screen
 DrawBoard proc
-
 	;Save the registers
 	pushad
-	
 	mov dl, 0						;initial x value is 0
 	mov dh, 0						;initial y value is 0
 	call gotoxy						;set the cursor position to the xy position
@@ -130,6 +156,9 @@ DrawBoard proc
 			.ELSEIF (dh == 0) || (dh == YCoords)
 				mov al, "-"
 				call WriteChar
+			.ELSE
+				mov al, " "
+				call WriteChar
 			.ENDIF
 			
 			inc dl
@@ -139,25 +168,29 @@ DrawBoard proc
 		mov dl, 0
 		inc dh
 		call gotoxy
-		
 		pop ecx
 	Loop L1
 
 	;Restore the registers
 	popad
-
 	ret
-drawBoard endp
+DrawBoard endp
 
+DrawFullBoard proc
+	call DrawBoard
+	call DrawLP
+	call DrawRP
+	ret
+DrawFullBoard endp
 
 main proc
 
-	;L1:
-		call DrawRP
-		call DrawLP
-		call DrawBoard
+	L1:
+		call DrawFullBoard
+		inc LPCoords
+		inc RPCoords
 		;call InstructionListener
-	;Loop L1
+	Loop L1
 
 	push 'b'
 	call IQPushBack
