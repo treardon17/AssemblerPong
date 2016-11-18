@@ -1,0 +1,2 @@
+KeyboardResponse PROTO
+GetKeyboardChar PROTO

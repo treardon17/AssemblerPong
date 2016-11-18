@@ -1,6 +1,7 @@
 ; 32-bit assembly language template
 
 INCLUDE Irvine32.inc
+;INCLUDE Utility.inc
 
 .data
 
