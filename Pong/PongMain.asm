@@ -1,7 +1,9 @@
-; 32-bit assembly language template
+; TITLE Pong game in assembler
 
 INCLUDE Irvine32.inc
-;INCLUDE Utility.inc
+
+_kbhit PROTO C
+getch PROTO C
 
 .data
 
@@ -75,6 +77,27 @@ IQPopFront proc
 	ret
 IQPopFront ENDP
 
+ClearLP proc
+	pushad
+	xor eax, eax
+	mov al, LPCoords
+	add al, PaddleLength
+
+	mov ecx, PaddleLength + 1
+	xor edx, edx
+	mov dl, 1
+	mov dh, LPCoords
+
+	RemovePaddleLoop:
+		call gotoxy
+		mov al, " "
+		call WriteChar
+		inc dh
+	Loop RemovePaddleLoop
+	popad
+	ret
+ClearLP endp
+
 DrawLP proc
 	pushad
 
@@ -108,6 +131,27 @@ DrawLP proc
 	ret
 DrawLP endp
 
+
+ClearRP proc
+	pushad
+	xor eax, eax
+	mov al, RPCoords
+	add al, PaddleLength
+
+	mov ecx, PaddleLength + 1
+	xor edx, edx
+	mov dl, XCoords - 1
+	mov dh, RPCoords
+	RemovePaddleLoop:
+		call gotoxy
+		mov al, " "
+		call WriteChar
+		inc dh
+	Loop RemovePaddleLoop
+	popad
+	ret
+ClearRP endp
+
 DrawRP proc
 	pushad
 
@@ -127,6 +171,7 @@ DrawRP proc
 	xor edx, edx
 	mov dl, XCoords - 1
 	mov dh, RPCoords
+	
 	mov ecx, PaddleLength + 1
 	L1:
 		call gotoxy
@@ -140,6 +185,12 @@ DrawRP proc
 	popad
 	ret
 DrawRP endp
+
+DrawPaddles proc
+	call DrawLP
+	call DrawRP
+	ret
+DrawPaddles endp
 
 ;This function draws the board to the screen
 DrawBoard proc
@@ -185,13 +236,6 @@ DrawBoard proc
 	ret
 DrawBoard endp
 
-DrawFullBoard proc
-	call DrawBoard
-	call DrawLP
-	call DrawRP
-	ret
-DrawFullBoard endp
-
 SetCursorToRead proc
 	pushad
 	mov dl, 0
@@ -202,32 +246,41 @@ SetCursorToRead proc
 	ret
 SetCursorToRead endp
 
-main proc
+PongMain proc C
+
+	xor eax, eax
+	call DrawBoard
 
 	L1:
-		call DrawFullBoard
-		call ReadInt
-		.IF (eax == 1)
+		call DrawPaddles
+		.IF (eax == 49)
+			call ClearRP
 			inc RPCoords
-		.ELSEIF (eax == 2)
+			call DrawPaddles
+		.ELSEIF (eax == 50)
+			call ClearRP
 			dec RPCoords
+			call DrawPaddles
 		.ENDIF
-		;call InstructionListener
+
+		xor eax, eax
+		
+		push ecx
+		mov ecx, 2147483647
+		L2:
+			call _kbhit
+			.IF (eax != 0)
+				call getch
+				call WriteInt
+				pop ecx
+				jmp L1
+			.ENDIF
+		Loop l2
+		pop ecx
+
+		;INVOKE Sleep, 5000
 	Loop L1
 
-	push 'b'
-	call IQPushBack
-
-	push 'a'
-	call IQPushBack
-
-	push 'c'
-	call IQPushBack
-
-	call IQPopFront
-	call IQPopFront
-	call IQPopFront
-
-	invoke ExitProcess,0
-main endp
-end main
+	ret
+PongMain endp
+end
