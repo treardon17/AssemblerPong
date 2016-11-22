@@ -22,26 +22,8 @@ RPCoords BYTE 0						;coordinates for the right paddle
 
 .code
 
-;We should eventually make this into a queue listener
-InstructionListener proc
-	push ecx
-	mov ecx, 500000000
-
-	L1:
-		;Do listening stuff here
-	Loop L1
-
-	pop ecx
-	ret
-InstructionListener ENDP
-
 ;Adds an item to the back of the queue
 IQPushBack proc, instruction:BYTE
-
-	;If the queue is empty, move the start of the queue to the first spot in the array
-	.IF IQCount == 0
-		mov IQStart, 0
-	.ENDIF
 
 	xor eax, eax				;zero out the eax register
 	mov esi, IQEnd				;tell esi where the end of the array is
@@ -73,51 +55,59 @@ IQPopFront proc
 		.ENDIF
 		dec IQCount				;decrease the count of the array
 	.ENDIF
+
+	;If the queue is empty, move the start of the queue to the first spot in the array
+	.IF (IQCount == 0)
+		mov IQStart, 0
+		mov IQEnd, 0
+	.ENDIF
 	
 	ret
 IQPopFront ENDP
 
+;This will clear the left paddle
 ClearLP proc
-	pushad
-	xor eax, eax
-	mov al, LPCoords
-	add al, PaddleLength
+	pushad						;save the registers
+	xor eax, eax				
 
-	mov ecx, PaddleLength + 1
-	xor edx, edx
-	mov dl, 1
-	mov dh, LPCoords
+	mov ecx, PaddleLength + 1	;tell ecx how long the paddle is
+	xor edx, edx				
+	mov dl, 1					;x coordinate is 1
+	mov dh, LPCoords			;y coordinate is what was stored in LPCoords
 
 	RemovePaddleLoop:
-		call gotoxy
-		mov al, " "
-		call WriteChar
-		inc dh
+		call gotoxy				;go to the xy position
+		mov al, " "				;put a space there
+		call WriteChar			
+		inc dh					;increment the y position
 	Loop RemovePaddleLoop
 	popad
 	ret
 ClearLP endp
 
+;draws the left paddle to the screen
 DrawLP proc
 	pushad
 
 	xor eax, eax
-	mov al, LPCoords
-	add al, PaddleLength
+	mov al, LPCoords			;tell al where left paddle starts
+	add al, PaddleLength		;tell al where left paddle ends (for edge detection)
 
-	.IF (eax >= YCoords)
-		mov al, YCoords
+	.IF (eax >= YCoords)		;if the position exceeds the bounds of the board
+		mov al, YCoords			;move to the last valid position on the edge (bottom)
 		sub al, PaddleLength
 		sub al, 1
 		mov LPCoords, al
 	.ELSEIF (LPCoords <= 1)
-		mov LPCoords, 1
+		mov LPCoords, 1			;otherwise move to the other last valid position on the edge (top)
 	.ENDIF
 
+	;draw the paddle to the console (see above comments for what the heck is going on)
 	xor edx, edx
 	mov dl, 1
 	mov dh, LPCoords
 	mov ecx, PaddleLength + 1
+
 	L1:
 		call gotoxy
 		mov al, "]"
@@ -131,12 +121,10 @@ DrawLP proc
 	ret
 DrawLP endp
 
-
+;See ClearLP for comments
 ClearRP proc
 	pushad
 	xor eax, eax
-	mov al, RPCoords
-	add al, PaddleLength
 
 	mov ecx, PaddleLength + 1
 	xor edx, edx
@@ -152,6 +140,7 @@ ClearRP proc
 	ret
 ClearRP endp
 
+;See Draw LP for comments
 DrawRP proc
 	pushad
 
@@ -171,8 +160,8 @@ DrawRP proc
 	xor edx, edx
 	mov dl, XCoords - 1
 	mov dh, RPCoords
-	
 	mov ecx, PaddleLength + 1
+
 	L1:
 		call gotoxy
 		mov al, "["
@@ -186,6 +175,7 @@ DrawRP proc
 	ret
 DrawRP endp
 
+;Draws the paddles to the screen
 DrawPaddles proc
 	call DrawLP
 	call DrawRP
@@ -208,13 +198,13 @@ DrawBoard proc
 		push ecx
 		mov ecx, XCoords + 1
 		L2:
-			.IF (dl == 0) || (dl == XCoords)
+			.IF (dl == 0) || (dl == XCoords)			;Draws a | on the sides of the screen
 				mov al, "|"
 				call WriteChar
-			.ELSEIF (dh == 0) || (dh == YCoords)
+			.ELSEIF (dh == 0) || (dh == YCoords)		;Draws a - on the top and bottom
 				mov al, "-"
 				call WriteChar
-			.ELSE
+			.ELSE										;Draws a space everywhere else
 				mov al, " "
 				call WriteChar
 			.ENDIF
@@ -236,6 +226,7 @@ DrawBoard proc
 	ret
 DrawBoard endp
 
+;Sets the cursor to be below the board to make inputting stuff look better
 SetCursorToRead proc
 	pushad
 	mov dl, 0
@@ -247,12 +238,12 @@ SetCursorToRead proc
 SetCursorToRead endp
 
 PongMain proc C
-
 	xor eax, eax
 	call DrawBoard
 
 	L1:
 		call DrawPaddles
+		call IQPopFront
 		.IF (eax == 49)
 			call ClearRP
 			inc RPCoords
@@ -264,19 +255,18 @@ PongMain proc C
 		.ENDIF
 
 		xor eax, eax
-		
-		push ecx
-		mov ecx, 2147483647
+		mov ecx, 10000
 		L2:
+			push ecx
 			call _kbhit
 			.IF (eax != 0)
 				call getch
 				call WriteInt
-				pop ecx
-				jmp L1
+				push eax
+				call IQPushBack
 			.ENDIF
+			pop ecx
 		Loop l2
-		pop ecx
 
 		;INVOKE Sleep, 5000
 	Loop L1
