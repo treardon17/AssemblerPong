@@ -237,23 +237,35 @@ SetCursorToRead proc
 	ret
 SetCursorToRead endp
 
+PaddleLogic proc
+	call IQPopFront
+	.IF (eax == 49)
+		call ClearLP
+		inc LPCoords
+		call DrawLP
+	.ELSEIF (eax == 50)
+		call ClearLP
+		dec LPCoords
+		call DrawLP
+	.ELSEIF (eax == 57)
+		call ClearRP
+		inc RPcoords
+		call DrawRP
+	.ELSEIF (eax == 48)
+		call ClearRP
+		dec RPCoords
+		call DrawRP
+	.ENDIF
+	ret
+PaddleLogic endp
+
 PongMain proc C
 	xor eax, eax
 	call DrawBoard
+	call DrawPaddles
 
 	L1:
-		call DrawPaddles
-		call IQPopFront
-		.IF (eax == 49)
-			call ClearRP
-			inc RPCoords
-			call DrawPaddles
-		.ELSEIF (eax == 50)
-			call ClearRP
-			dec RPCoords
-			call DrawPaddles
-		.ENDIF
-
+		call PaddleLogic
 		xor eax, eax
 		mov ecx, 10000
 		L2:
@@ -267,8 +279,6 @@ PongMain proc C
 			.ENDIF
 			pop ecx
 		Loop l2
-
-		;INVOKE Sleep, 5000
 	Loop L1
 
 	ret
