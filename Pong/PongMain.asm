@@ -8,10 +8,14 @@ getch PROTO C
 .data
 
 ;INSTRUCTION QUEUE VARIABLES
-IQueue BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
-IQCount DWORD 0						;The number of elements stored in the array
-IQStart DWORD 0						;The starting index of the queue
-IQEnd DWORD 0						;The ending index of the queue
+IQ STRUCT
+Dataq BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
+Countq DWORD 0						;The number of elements stored in the array
+Startq DWORD 0						;The starting index of the queue
+Endq DWORD 0						;The ending index of the queue
+IQ ENDS
+
+Queue IQ <>
 
 ;BOARD STATE VARIABLES
 XCoords = 100						;the width of the board
@@ -25,16 +29,15 @@ RPCoords BYTE 0						;coordinates for the right paddle
 ;Adds an item to the back of the queue
 IQPushBack proc, instruction:BYTE
 
-	xor eax, eax				;zero out the eax register
-	mov esi, IQEnd				;tell esi where the end of the array is
-	mov al, instruction			;tell al what the instruction is
-	mov IQueue[esi], al			;move the instruction to the last place in the array
-	inc IQCount					;increment the number of items we have stored in the array
-	inc IQEnd
-
+	xor eax, eax					;zero out the eax register
+	mov esi,  Queue.Endq			;tell esi where the end of the array is
+	mov al, instruction				;tell al what the instruction is
+	mov Queue.Dataq[esi], al		;move the instruction to the last place in the array
+	add Queue.Countq, 1				;increment the number of items we have stored in the array
+	add Queue.Endq, 1
 	
-	.IF IQEnd > 1000			;if the end of the array is greater than the max size of the array
-		mov IQEnd, 0			;set the end of the array to be the first item in the array
+	.IF Queue.Endq > 1000			;if the end of the array is greater than the max size of the array
+		mov Queue.Endq, 0			;set the end of the array to be the first item in the array
 	.ENDIF
 
 	ret
@@ -42,24 +45,24 @@ IQPushBack ENDP
 
 ;Takes the first item from the queue
 IQPopFront proc
-	xor eax, eax				;zero out the eax register
-	.IF IQCount > 0				;if there is an item in the array
-		mov esi, IQStart		;tell esi where the start of the queue is 
-		mov al, IQueue[esi]		;get the first item in the queue
-		mov IQueue[esi], 0		;zero out the first item in the queue
-		inc esi					;increment esi to see if it's larger than the max size
-		.IF esi > 1000			;if it's greater than the max size
-			mov IQStart, 0		;move the start to zero
+	xor eax, eax					;zero out the eax register
+	.IF Queue.Countq > 0			;if there is an item in the array
+		mov esi, Queue.Startq		;tell esi where the start of the queue is 
+		mov al, Queue.Dataq[esi]	;get the first item in the queue
+		mov Queue.Dataq[esi], 0		;zero out the first item in the queue
+		inc esi						;increment esi to see if it's larger than the max size
+		.IF esi > 1000				;if it's greater than the max size
+			mov Queue.Startq, 0		;move the Startq to zero
 		.ELSE
-			mov IQStart, esi	;otherwise increment the start of the array
+			mov Queue.Startq, esi	;otherwise increment the Startq of the array
 		.ENDIF
-		dec IQCount				;decrease the count of the array
+		dec Queue.Countq			;decrease the count of the array
 	.ENDIF
 
-	;If the queue is empty, move the start of the queue to the first spot in the array
-	.IF (IQCount == 0)
-		mov IQStart, 0
-		mov IQEnd, 0
+	;If the queue is empty, move the Startq of the queue to the first spot in the array
+	.IF (Queue.Countq == 0)
+		mov Queue.Startq, 0
+		mov Queue.Endq, 0
 	.ENDIF
 	
 	ret
@@ -186,9 +189,9 @@ DrawPaddles endp
 DrawBoard proc
 	;Save the registers
 	pushad
-	mov dl, 0						;initial x value is 0
-	mov dh, 0						;initial y value is 0
-	call gotoxy						;set the cursor position to the xy position
+	mov dl, 0											;initial x value is 0
+	mov dh, 0											;initial y value is 0
+	call gotoxy											;set the cursor position to the xy position
 	
 	;First loop is rows
 	;Second loop is columns
@@ -238,24 +241,35 @@ SetCursorToRead proc
 SetCursorToRead endp
 
 PaddleLogic proc
-	call IQPopFront
-	.IF (eax == 49)
-		call ClearLP
-		inc LPCoords
-		call DrawLP
-	.ELSEIF (eax == 50)
-		call ClearLP
-		dec LPCoords
-		call DrawLP
-	.ELSEIF (eax == 57)
-		call ClearRP
-		inc RPcoords
-		call DrawRP
-	.ELSEIF (eax == 48)
-		call ClearRP
-		dec RPCoords
-		call DrawRP
+	pushad
+	xor ecx, ecx
+
+	;If there are instructions in the queue, then clear out all of the instructions
+	.IF (Queue.Countq > 0)
+		mov ecx, Queue.Countq
+		L1:
+			call IQPopFront
+			.IF (eax == 49)
+				call ClearLP
+				inc LPCoords
+				call DrawLP
+			.ELSEIF (eax == 50)
+				call ClearLP
+				dec LPCoords
+				call DrawLP
+			.ELSEIF (eax == 57)
+				call ClearRP
+				inc RPcoords
+				call DrawRP
+			.ELSEIF (eax == 48)
+				call ClearRP
+				dec RPCoords
+				call DrawRP
+			.ENDIF
+		Loop L1
 	.ENDIF
+	
+	popad
 	ret
 PaddleLogic endp
 
