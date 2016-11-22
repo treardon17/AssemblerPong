@@ -9,12 +9,11 @@ getch PROTO C
 
 ;INSTRUCTION QUEUE VARIABLES
 IQ STRUCT
-Dataq BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
 Countq DWORD 0						;The number of elements stored in the array
 Startq DWORD 0						;The starting index of the queue
 Endq DWORD 0						;The ending index of the queue
+Dataq BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
 IQ ENDS
-
 Queue IQ <>
 
 ;BOARD STATE VARIABLES
@@ -23,6 +22,15 @@ YCoords = 25						;the height of the board
 PaddleLength = 5					;the length of teh paddle
 LPCoords BYTE 0						;coordinates for the left paddle
 RPCoords BYTE 0						;coordinates for the right paddle
+
+Ball STRUCT
+XCoord BYTE XCoords/2				;set the xcoord to the middle of the board
+YCoord BYTE YCoords/2				;set the ycoord to the middle of the board
+BChar BYTE 233						;The copyright symbol
+IsLeft BYTE 0
+IsUp BYTE 0
+Ball ENDS
+TheBall Ball <>
 
 .code
 
@@ -185,6 +193,20 @@ DrawPaddles proc
 	ret
 DrawPaddles endp
 
+;Draws the ball to the screen (including logic)
+DrawBall proc
+	pushad
+	xor edx, edx
+	mov dl, TheBall.XCoord
+	mov dh, TheBall.YCoord
+	call gotoxy
+	mov al, TheBall.BChar
+	call WriteChar
+	call SetCursorToRead
+	popad
+	ret
+DrawBall endp
+
 ;This function draws the board to the screen
 DrawBoard proc
 	;Save the registers
@@ -277,7 +299,8 @@ PongMain proc C
 	xor eax, eax
 	call DrawBoard
 	call DrawPaddles
-
+	call DrawBall
+	
 	L1:
 		call PaddleLogic
 		xor eax, eax
@@ -287,7 +310,6 @@ PongMain proc C
 			call _kbhit
 			.IF (eax != 0)
 				call getch
-				call WriteInt
 				push eax
 				call IQPushBack
 			.ENDIF
