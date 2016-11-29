@@ -4,6 +4,7 @@ INCLUDE Irvine32.inc
 
 _kbhit PROTO C
 getch PROTO C
+Concat PROTO C
 
 .data
 
@@ -17,9 +18,12 @@ IQ ENDS
 Queue IQ <>
 
 ;BOARD STATE VARIABLES
-XCoords = 100						;the width of the board
+XCoords = 50						;the width of the board
 YCoords = 25						;the height of the board
-PaddleLength = 5					;the length of the paddle
+StartX = XCoords/2					;Starting point of the Ball
+StartY = YCoords/2					;Starting point of the Ball
+PaddleLength = 3					;the length of the paddle
+EndGame BYTE 0
 
 ;Board Borders
 TopBorder = 1
@@ -43,10 +47,11 @@ LPaddle Paddle <1, 1>
 ;SCORES OF PLAYERS
 P1Score BYTE 0
 P2Score BYTE 0
+MaxScore = 11
 
 Ball STRUCT
-XCoord BYTE XCoords/2				;set the xcoord to the middle of the board
-YCoord BYTE YCoords/2				;set the ycoord to the middle of the board
+XCoord BYTE StartX					;set the xcoord to the middle of the board
+YCoord BYTE StartY					;set the ycoord to the middle of the board
 BChar BYTE 233						;The copyright symbol
 Run BYTE 1
 Rise BYTE 1
@@ -126,12 +131,13 @@ DrawLP proc
 	add al, PaddleLength					;tell al where left paddle ends (for edge detection)
 
 	.IF (eax >= BottomBorder)				;if the position exceeds the bounds of the board
-		mov al, YCoords						;move to the last valid position on the edge (bottom)
+		mov al, BottomBorder						;move to the last valid position on the edge (bottom)
 		sub al, PaddleLength
-		mov LPaddle.YCoord, BottomBorder
+		mov LPaddle.YCoord, al
 	.ELSEIF (LPaddle.YCoord <= TopBorder)
 		mov LPaddle.YCoord, TopBorder		;otherwise move to the other last valid position on the edge (top)
 	.ENDIF
+
 
 	;draw the paddle to the console (see above comments for what the heck is going on)
 	xor edx, edx
@@ -183,8 +189,8 @@ DrawRP proc
 		mov al, BottomBorder
 		sub al, PaddleLength
 		mov RPaddle.YCoord, al
-	.ELSEIF (RPaddle.YCoord <= 1)
-		mov RPaddle.YCoord, 1
+	.ELSEIF (RPaddle.YCoord <= TopBorder)
+		mov RPaddle.YCoord, TopBorder
 	.ENDIF
 
 	xor edx, edx
@@ -212,8 +218,47 @@ DrawPaddles proc
 	ret
 DrawPaddles endp
 
+DrawScore proc
+	pushad
+	 
+	 .IF(P2Score == MaxScore || P1Score == MaxScore)		; Should end the game once a player reaches the MaxScore
+		mov EndGame, 1
+	 .ENDIF
+	 
+	 xor edx, edx
+	 mov dl, RightBorder
+	 add dl, 5
+	 mov dh, BottomBorder
+	 call gotoxy
+	 
+	 movzx eax, P1Score
+	 movzx ebx, P2Score
+	 push ebx
+	 push eax
+	 call Concat
+	 call SetCursorToRead
+
+	 pop eax
+	 pop ebx
+
+	popad
+	ret
+DrawScore endp
+
 BallMath proc
 	;PADDLE COLLISION LOGIC---------------------------------------
+	; Scoring logic and detecting collision to the wall
+	.IF (TheBall.XCoord == LeftBorder)					
+		inc P2Score
+		mov TheBall.XCoord, StartX
+		mov TheBall.YCoord, StartY
+
+	.ELSEIF (TheBall.XCoord == RightBorder)
+		inc P1Score
+		mov TheBall.XCoord, StartX
+		mov TheBall.YCoord, StartY
+	.ENDIF
+	
 	;LEFT--------------
 	;If the ball is in front of the left paddle
 	mov al, LPBorder
@@ -275,13 +320,6 @@ DrawBall proc
 	call WriteChar
 	
 	call BallMath
-	
-	;SCORING FUNCTION
-	.IF (TheBall.XCoord == LeftBorder)
-		inc P2Score
-	.ELSEIF (TheBall.XCoord == RightBorder)
-		inc P1Score
-	.ENDIF
 	
 	mov dl, TheBall.XCoord
 	mov dh, TheBall.YCoord
@@ -390,6 +428,7 @@ PongMain proc C
 	L1:
 		call DrawBall
 		call PaddleLogic
+		call DrawScore
 		xor eax, eax
 		mov ecx, 10000
 		L2:
@@ -401,8 +440,14 @@ PongMain proc C
 				call IQPushBack
 			.ENDIF
 			pop ecx
-		Loop l2
+		Loop L2
+		.IF (EndGame == 1)					; This will end the game and exit the loop for now
+			jmp GameOver 					
+		.ENDIF
 	Loop L1
+	
+	GameOver:
+	
 
 	ret
 PongMain endp
