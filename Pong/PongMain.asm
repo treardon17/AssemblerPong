@@ -19,16 +19,37 @@ Queue IQ <>
 ;BOARD STATE VARIABLES
 XCoords = 100						;the width of the board
 YCoords = 25						;the height of the board
-PaddleLength = 5					;the length of teh paddle
-LPCoords BYTE 0						;coordinates for the left paddle
-RPCoords BYTE 0						;coordinates for the right paddle
+PaddleLength = 5					;the length of the paddle
+
+;Board Borders
+TopBorder = 1
+BottomBorder = YCoords - 1
+LeftBorder = 1
+RightBorder = XCoords - 1
+
+;Paddle borders
+LPBorder = LeftBorder + 2
+RPBorder = RightBorder - 2
+
+;Paddles
+Paddle STRUCT
+XCoord BYTE 0
+YCoord BYTE 0
+Paddle ENDS
+
+RPaddle Paddle <XCoords - 1, 1>
+LPaddle Paddle <1, 1>
+
+;SCORES OF PLAYERS
+P1Score BYTE 0
+P2Score BYTE 0
 
 Ball STRUCT
 XCoord BYTE XCoords/2				;set the xcoord to the middle of the board
 YCoord BYTE YCoords/2				;set the ycoord to the middle of the board
 BChar BYTE 233						;The copyright symbol
-IsLeft BYTE 0
-IsUp BYTE 0
+Run BYTE 1
+Rise BYTE 1
 Ball ENDS
 TheBall Ball <>
 
@@ -84,7 +105,7 @@ ClearLP proc
 	mov ecx, PaddleLength + 1	;tell ecx how long the paddle is
 	xor edx, edx				
 	mov dl, 1					;x coordinate is 1
-	mov dh, LPCoords			;y coordinate is what was stored in LPCoords
+	mov dh, LPaddle.YCoord		;y coordinate is what was stored in LPCoordTop
 
 	RemovePaddleLoop:
 		call gotoxy				;go to the xy position
@@ -101,22 +122,21 @@ DrawLP proc
 	pushad
 
 	xor eax, eax
-	mov al, LPCoords			;tell al where left paddle starts
-	add al, PaddleLength		;tell al where left paddle ends (for edge detection)
+	mov al, LPaddle.YCoord					;tell al where left paddle starts
+	add al, PaddleLength					;tell al where left paddle ends (for edge detection)
 
-	.IF (eax >= YCoords)		;if the position exceeds the bounds of the board
-		mov al, YCoords			;move to the last valid position on the edge (bottom)
+	.IF (eax >= BottomBorder)				;if the position exceeds the bounds of the board
+		mov al, YCoords						;move to the last valid position on the edge (bottom)
 		sub al, PaddleLength
-		sub al, 1
-		mov LPCoords, al
-	.ELSEIF (LPCoords <= 1)
-		mov LPCoords, 1			;otherwise move to the other last valid position on the edge (top)
+		mov LPaddle.YCoord, BottomBorder
+	.ELSEIF (LPaddle.YCoord <= TopBorder)
+		mov LPaddle.YCoord, TopBorder		;otherwise move to the other last valid position on the edge (top)
 	.ENDIF
 
 	;draw the paddle to the console (see above comments for what the heck is going on)
 	xor edx, edx
 	mov dl, 1
-	mov dh, LPCoords
+	mov dh, LPaddle.YCoord
 	mov ecx, PaddleLength + 1
 
 	L1:
@@ -139,8 +159,8 @@ ClearRP proc
 
 	mov ecx, PaddleLength + 1
 	xor edx, edx
-	mov dl, XCoords - 1
-	mov dh, RPCoords
+	mov dl, RPaddle.XCoord
+	mov dh, RPaddle.YCoord
 	RemovePaddleLoop:
 		call gotoxy
 		mov al, " "
@@ -156,21 +176,20 @@ DrawRP proc
 	pushad
 
 	xor eax, eax
-	mov al, RPCoords
+	mov al, RPaddle.YCoord
 	add al, PaddleLength
 
-	.IF (eax >= YCoords)
-		mov al, YCoords
+	.IF (eax >= BottomBorder)
+		mov al, BottomBorder
 		sub al, PaddleLength
-		sub al, 1
-		mov RPCoords, al
-	.ELSEIF (RPCoords <= 1)
-		mov RPCoords, 1
+		mov RPaddle.YCoord, al
+	.ELSEIF (RPaddle.YCoord <= 1)
+		mov RPaddle.YCoord, 1
 	.ENDIF
 
 	xor edx, edx
 	mov dl, XCoords - 1
-	mov dh, RPCoords
+	mov dh, RPaddle.YCoord
 	mov ecx, PaddleLength + 1
 
 	L1:
@@ -193,10 +212,77 @@ DrawPaddles proc
 	ret
 DrawPaddles endp
 
+BallMath proc
+	;PADDLE COLLISION LOGIC---------------------------------------
+	;LEFT--------------
+	;If the ball is in front of the left paddle
+	mov al, LPBorder
+	.IF (TheBall.XCoord == al)
+		xor al, al
+		mov al, LPaddle.YCoord
+		add al, PaddleLength
+		sub al, TheBall.YCoord
+		;If the ball is in the range of the paddle
+		.IF (al >= 0) && (al <= PaddleLength)
+			mov TheBall.Run, 1
+		.ENDIF
+	.ENDIF
+	;RIGHT--------------
+	mov al, RPBorder
+	.IF (TheBall.XCoord == al)
+		xor al, al
+		mov al, RPaddle.YCoord
+		add al, PaddleLength
+		sub al, TheBall.YCoord
+		;If the ball is in the range of the paddle
+		.IF (al >= 0) && (al <= PaddleLength)
+			mov TheBall.Run, -1
+		.ENDIF
+	.ENDIF
+	;TOP--------------
+	mov al, TopBorder
+	.IF (TheBall.YCoord == al)
+		mov TheBall.Rise, 1
+	.ENDIF
+	;BOTTOM--------------
+	mov al, BottomBorder
+	.IF (TheBall.YCoord == al)
+		mov TheBall.Rise, -1
+	.ENDIF
+	;END PADDLE COLLISION LOGIC---------------------------------------
+	
+	mov al, TheBall.YCoord
+	add al, TheBall.Rise
+	mov TheBall.YCoord, al
+	
+	mov al, TheBall.XCoord
+	add al, TheBall.Run
+	mov TheBall.XCoord, al
+	
+	ret
+BallMath endp
+
 ;Draws the ball to the screen (including logic)
 DrawBall proc
 	pushad
 	xor edx, edx
+	
+	;Erase the ball
+	mov dl, TheBall.XCoord
+	mov dh, TheBall.YCoord
+	call gotoxy
+	mov al, " "
+	call WriteChar
+	
+	call BallMath
+	
+	;SCORING FUNCTION
+	.IF (TheBall.XCoord == LeftBorder)
+		inc P2Score
+	.ELSEIF (TheBall.XCoord == RightBorder)
+		inc P1Score
+	.ENDIF
+	
 	mov dl, TheBall.XCoord
 	mov dh, TheBall.YCoord
 	call gotoxy
@@ -273,19 +359,19 @@ PaddleLogic proc
 			call IQPopFront
 			.IF (eax == 49)
 				call ClearLP
-				inc LPCoords
+				inc LPaddle.YCoord
 				call DrawLP
 			.ELSEIF (eax == 50)
 				call ClearLP
-				dec LPCoords
+				dec LPaddle.YCoord
 				call DrawLP
 			.ELSEIF (eax == 57)
 				call ClearRP
-				inc RPcoords
+				inc RPaddle.YCoord
 				call DrawRP
 			.ELSEIF (eax == 48)
 				call ClearRP
-				dec RPCoords
+				dec RPaddle.YCoord
 				call DrawRP
 			.ENDIF
 		Loop L1
@@ -302,6 +388,7 @@ PongMain proc C
 	call DrawBall
 	
 	L1:
+		call DrawBall
 		call PaddleLogic
 		xor eax, eax
 		mov ecx, 10000
