@@ -18,11 +18,11 @@ IQ ENDS
 Queue IQ <>
 
 ;BOARD STATE VARIABLES
-XCoords = 50						;the width of the board
+XCoords = 74						;the width of the board
 YCoords = 25						;the height of the board
 StartX = XCoords/2					;Starting point of the Ball
 StartY = YCoords/2					;Starting point of the Ball
-PaddleLength = 3					;the length of the paddle
+PaddleLength = 4					;the length of the paddle
 EndGame BYTE 0
 
 ;Board Borders
@@ -59,6 +59,42 @@ Ball ENDS
 TheBall Ball <>
 
 .code
+
+SetColorToP1 proc
+	pushad
+	xor eax, eax
+	mov eax, cyan + (cyan*16)
+	call SetTextColor
+	popad
+	ret
+SetColorToP1 endp
+
+SetColorToP2 proc
+	pushad
+	xor eax, eax
+	mov eax, red + (red*16)
+	call SetTextColor
+	popad
+	ret
+SetColorToP2 endp
+
+SetColorBW proc
+	pushad
+	xor eax, eax
+	mov eax, white + (black*16)
+	call SetTextColor
+	popad
+	ret
+SetColorBW endp
+
+SetColorBorder proc
+	pushad
+	xor eax, eax
+	mov eax, gray + (gray*16)
+	call SetTextColor
+	popad
+	ret
+SetColorBorder endp
 
 ;Adds an item to the back of the queue
 IQPushBack proc, instruction:BYTE
@@ -138,20 +174,20 @@ DrawLP proc
 		mov LPaddle.YCoord, TopBorder		;otherwise move to the other last valid position on the edge (top)
 	.ENDIF
 
-
+	call SetColorToP1
+	
 	;draw the paddle to the console (see above comments for what the heck is going on)
 	xor edx, edx
 	mov dl, 1
 	mov dh, LPaddle.YCoord
 	mov ecx, PaddleLength + 1
-
 	L1:
 		call gotoxy
 		mov al, "]"
 		call WriteChar
 		inc dh
 	Loop L1
-
+	call SetColorBW
 	call SetCursorToRead
 
 	popad
@@ -193,11 +229,11 @@ DrawRP proc
 		mov RPaddle.YCoord, TopBorder
 	.ENDIF
 
+	call SetColorToP2
 	xor edx, edx
 	mov dl, XCoords - 1
 	mov dh, RPaddle.YCoord
 	mov ecx, PaddleLength + 1
-
 	L1:
 		call gotoxy
 		mov al, "["
@@ -205,6 +241,7 @@ DrawRP proc
 		inc dh
 	Loop L1
 
+	call SetColorBW
 	call SetCursorToRead
 
 	popad
@@ -262,36 +299,42 @@ BallMath proc
 	;LEFT--------------
 	;If the ball is in front of the left paddle
 	mov al, LPBorder
-	.IF (TheBall.XCoord == al)
+	.IF (TheBall.XCoord <= al)
 		xor al, al
 		mov al, LPaddle.YCoord
 		add al, PaddleLength
 		sub al, TheBall.YCoord
 		;If the ball is in the range of the paddle
-		.IF (al >= 0) && (al <= PaddleLength)
+		.IF (al >= 1) && (al <= PaddleLength - 1)
+			mov TheBall.Run, 2
+		.ELSEIF (al == 0) || (al == PaddleLength)
 			mov TheBall.Run, 1
 		.ENDIF
 	.ENDIF
 	;RIGHT--------------
 	mov al, RPBorder
-	.IF (TheBall.XCoord == al)
+	.IF (TheBall.XCoord >= al)
 		xor al, al
 		mov al, RPaddle.YCoord
 		add al, PaddleLength
 		sub al, TheBall.YCoord
 		;If the ball is in the range of the paddle
-		.IF (al >= 0) && (al <= PaddleLength)
+		.IF (al >= 1) && (al <= PaddleLength - 1)
+			mov TheBall.Run, -2
+		.ELSEIF (al == 0) || (al == PaddleLength)
 			mov TheBall.Run, -1
 		.ENDIF
 	.ENDIF
 	;TOP--------------
 	mov al, TopBorder
-	.IF (TheBall.YCoord == al)
+	.IF (TheBall.YCoord <= al)
+		;RISE
 		mov TheBall.Rise, 1
 	.ENDIF
 	;BOTTOM--------------
 	mov al, BottomBorder
-	.IF (TheBall.YCoord == al)
+	.IF (TheBall.YCoord >= al)
+		;RISE
 		mov TheBall.Rise, -1
 	.ENDIF
 	;END PADDLE COLLISION LOGIC---------------------------------------
@@ -348,12 +391,15 @@ DrawBoard proc
 		mov ecx, XCoords + 1
 		L2:
 			.IF (dl == 0) || (dl == XCoords)			;Draws a | on the sides of the screen
+				call SetColorBorder
 				mov al, "|"
 				call WriteChar
 			.ELSEIF (dh == 0) || (dh == YCoords)		;Draws a - on the top and bottom
+				call SetColorBorder
 				mov al, "-"
 				call WriteChar
 			.ELSE										;Draws a space everywhere else
+				call SetColorBW
 				mov al, " "
 				call WriteChar
 			.ENDIF
@@ -368,6 +414,7 @@ DrawBoard proc
 		pop ecx
 	Loop L1
 	
+	call SetColorBW
 	call SetCursorToRead
 
 	;Restore the registers
@@ -430,7 +477,7 @@ PongMain proc C
 		call PaddleLogic
 		call DrawScore
 		xor eax, eax
-		mov ecx, 10000
+		mov ecx, 12500
 		L2:
 			push ecx
 			call _kbhit
