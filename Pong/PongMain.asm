@@ -148,9 +148,9 @@ ClearLP proc
 
 	RemovePaddleLoop:
 		call gotoxy								;go to the xy position
-		mov al, " "				;put a space there
-		call WriteChar
-		inc dh					;increment the y position
+		mov al, " "								;put a space there
+		call WriteChar						;Write the space to the screen
+		inc dh										;increment the y position
 	Loop RemovePaddleLoop
 	popad
 	ret
@@ -159,22 +159,20 @@ ClearLP endp
 ;draws the left paddle to the screen
 DrawLP proc
 	pushad
-
 	xor eax, eax
-	mov al, LPaddle.YCoord					;tell al where left paddle starts
-	add al, PaddleLength					;tell al where left paddle ends (for edge detection)
+	mov al, LPaddle.YCoord						;tell al where left paddle starts
+	add al, PaddleLength							;tell al where left paddle ends (for edge detection)
 
-	.IF (eax >= BottomBorder)				;if the position exceeds the bounds of the board
-		mov al, BottomBorder						;move to the last valid position on the edge (bottom)
+	.IF (eax >= BottomBorder)					;if the position exceeds the bounds of the board
+		mov al, BottomBorder
 		sub al, PaddleLength
-		mov LPaddle.YCoord, al
+		mov LPaddle.YCoord, al					;move to the last valid position on the edge (bottom)
 	.ELSEIF (LPaddle.YCoord <= TopBorder)
 		mov LPaddle.YCoord, TopBorder		;otherwise move to the other last valid position on the edge (top)
 	.ENDIF
 
-	call SetColorToP1
-
 	;draw the paddle to the console (see above comments for what the heck is going on)
+	call SetColorToP1									;Make the color blue
 	xor edx, edx
 	mov dl, 1
 	mov dh, LPaddle.YCoord
