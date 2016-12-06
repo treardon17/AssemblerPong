@@ -1,6 +1,6 @@
 ;--------------------------------------------------------------------------------------------
 ; TITLE Pong game in assembler
-; AUTHORS: Derek Hansen, Tyler Reardon
+; AUTHORS: Derek Hansen, Tyler Reardon, Riley Sexton
 ; PEOPLE THAT WATCHED US CODE/WENT ON REDDIT FOR LOLCODE TUTORIALS: Riley Sexton
 ;--------------------------------------------------------------------------------------------
 ; INSTRUCTIONS:
