@@ -10,19 +10,19 @@ Concat PROTO C
 
 ;INSTRUCTION QUEUE VARIABLES
 IQ STRUCT
-Countq DWORD 0						;The number of elements stored in the array
-Startq DWORD 0						;The starting index of the queue
-Endq DWORD 0						;The ending index of the queue
+Countq DWORD 0								;The number of elements stored in the array
+Startq DWORD 0								;The starting index of the queue
+Endq DWORD 0									;The ending index of the queue
 Dataq BYTE 1000 DUP(0)				;An array of 1000 characters initialized to 0
 IQ ENDS
 Queue IQ <>
 
 ;BOARD STATE VARIABLES
-XCoords = 74						;the width of the board
-YCoords = 25						;the height of the board
-StartX = XCoords/2					;Starting point of the Ball
-StartY = YCoords/2					;Starting point of the Ball
-PaddleLength = 4					;the length of the paddle
+XCoords = 74									;the width of the board
+YCoords = 25									;the height of the board
+StartX = XCoords/2						;Starting point of the Ball
+StartY = YCoords/2						;Starting point of the Ball
+PaddleLength = 4							;the length of the paddle
 EndGame BYTE 0
 
 ;Board Borders
@@ -31,127 +31,125 @@ BottomBorder = YCoords - 1
 LeftBorder = 1
 RightBorder = XCoords - 1
 
-;Paddle borders
+;Paddle borders (location where the ball should bounce on paddle)
 LPBorder = LeftBorder + 2
 RPBorder = RightBorder - 2
 
 ;Paddles
 Paddle STRUCT
-XCoord BYTE 0
-YCoord BYTE 0
+XCoord BYTE 0									;Position of the x coordinate of the paddle
+YCoord BYTE 0									;Position of the y coordinate of the top of the paddle
 Paddle ENDS
 
-RPaddle Paddle <XCoords - 1, 1>
-LPaddle Paddle <1, 1>
+RPaddle Paddle <XCoords-1,1>	;Coordinates for the right paddle
+LPaddle Paddle <1, 1>					;Coordinates for the left paddle
 
 ;SCORES OF PLAYERS
-P1Score BYTE 0
-P2Score BYTE 0
-MaxScore = 11
+P1Score BYTE 0								;Score for player 1
+P2Score BYTE 0								;Score for player 2
+MaxScore = 11									;Max score for the end game
 
 Ball STRUCT
 XCoord BYTE StartX					;set the xcoord to the middle of the board
 YCoord BYTE StartY					;set the ycoord to the middle of the board
-BChar BYTE 233						;The copyright symbol
-Run BYTE 1
-Rise BYTE 1
+BChar BYTE 233							;The copyright symbol
+Run BYTE 1									;The distance horizontally the ball should travel
+Rise BYTE 1									;The distance vertically the ball should travel
 Ball ENDS
-TheBall Ball <>
+TheBall Ball <>							;The actuall ball object
 
 .code
 
+;Set the color to blue for player one
 SetColorToP1 proc
 	pushad
-	xor eax, eax
-	mov eax, cyan + (cyan*16)
-	call SetTextColor
+	xor eax, eax							;Clear the eax register
+	mov eax, cyan + (cyan*16)	;Set the background and foreground to blue
+	call SetTextColor					;Set the color
 	popad
 	ret
 SetColorToP1 endp
 
+;Set the color to red for player two
 SetColorToP2 proc
 	pushad
-	xor eax, eax
-	mov eax, red + (red*16)
-	call SetTextColor
+	xor eax, eax							;Clear the eax register
+	mov eax, red + (red*16)		;Set the background and foreground to red
+	call SetTextColor					;Set the color
 	popad
 	ret
 SetColorToP2 endp
 
+;Set the color to black and white (for the ball)
 SetColorBW proc
 	pushad
-	xor eax, eax
-	mov eax, white + (black*16)
-	call SetTextColor
+	xor eax, eax								;Clear the eax register
+	mov eax, white + (black*16)	;Set the foreground color to white and the background color to black
+	call SetTextColor						;Set the color
 	popad
 	ret
 SetColorBW endp
 
+;Set the color to grey for the borders
 SetColorBorder proc
 	pushad
-	xor eax, eax
-	mov eax, gray + (gray*16)
-	call SetTextColor
+	xor eax, eax							;Clear eax
+	mov eax, gray + (gray*16)	;Set background and foreground to gray
+	call SetTextColor					;Set the color
 	popad
 	ret
 SetColorBorder endp
 
 ;Adds an item to the back of the queue
 IQPushBack proc, instruction:BYTE
-
-	xor eax, eax					;zero out the eax register
+	xor eax, eax							;zero out the eax register
 	mov esi,  Queue.Endq			;tell esi where the end of the array is
 	mov al, instruction				;tell al what the instruction is
-	mov Queue.Dataq[esi], al		;move the instruction to the last place in the array
+	mov Queue.Dataq[esi], al	;move the instruction to the last place in the array
 	add Queue.Countq, 1				;increment the number of items we have stored in the array
 	add Queue.Endq, 1
-	
 	.IF Queue.Endq > 1000			;if the end of the array is greater than the max size of the array
-		mov Queue.Endq, 0			;set the end of the array to be the first item in the array
+		mov Queue.Endq, 0				;set the end of the array to be the first item in the array
 	.ENDIF
-
 	ret
 IQPushBack ENDP
 
 ;Takes the first item from the queue
 IQPopFront proc
-	xor eax, eax					;zero out the eax register
-	.IF Queue.Countq > 0			;if there is an item in the array
-		mov esi, Queue.Startq		;tell esi where the start of the queue is 
+	xor eax, eax								;zero out the eax register
+	.IF Queue.Countq > 0				;if there is an item in the array
+		mov esi, Queue.Startq			;tell esi where the start of the queue is
 		mov al, Queue.Dataq[esi]	;get the first item in the queue
 		mov Queue.Dataq[esi], 0		;zero out the first item in the queue
-		inc esi						;increment esi to see if it's larger than the max size
-		.IF esi > 1000				;if it's greater than the max size
-			mov Queue.Startq, 0		;move the Startq to zero
+		inc esi										;increment esi to see if it's larger than the max size
+		.IF esi > 1000						;if it's greater than the max size
+			mov Queue.Startq, 0			;move the Startq to zero
 		.ELSE
-			mov Queue.Startq, esi	;otherwise increment the Startq of the array
+			mov Queue.Startq, esi		;otherwise increment the Startq of the array
 		.ENDIF
-		dec Queue.Countq			;decrease the count of the array
+		dec Queue.Countq					;decrease the count of the array
 	.ENDIF
-
 	;If the queue is empty, move the Startq of the queue to the first spot in the array
 	.IF (Queue.Countq == 0)
-		mov Queue.Startq, 0
-		mov Queue.Endq, 0
+		mov Queue.Startq, 0				;Reset the start index
+		mov Queue.Endq, 0					;Reset the ending index
 	.ENDIF
-	
 	ret
 IQPopFront ENDP
 
 ;This will clear the left paddle
 ClearLP proc
-	pushad						;save the registers
-	xor eax, eax				
-
-	mov ecx, PaddleLength + 1	;tell ecx how long the paddle is
-	xor edx, edx				
-	mov dl, 1					;x coordinate is 1
-	mov dh, LPaddle.YCoord		;y coordinate is what was stored in LPCoordTop
+	pushad											;save the registers
+	xor eax, eax								;clear eax
+	mov ecx, PaddleLength + 1		;tell ecx how long the paddle is
+	xor edx, edx								;clear edx
+	mov dl, 1										;x coordinate is 1
+	mov dh, LPaddle.YCoord			;y coordinate is what was stored in LPCoordTop
 
 	RemovePaddleLoop:
-		call gotoxy				;go to the xy position
+		call gotoxy								;go to the xy position
 		mov al, " "				;put a space there
-		call WriteChar			
+		call WriteChar
 		inc dh					;increment the y position
 	Loop RemovePaddleLoop
 	popad
@@ -175,7 +173,7 @@ DrawLP proc
 	.ENDIF
 
 	call SetColorToP1
-	
+
 	;draw the paddle to the console (see above comments for what the heck is going on)
 	xor edx, edx
 	mov dl, 1
@@ -257,17 +255,17 @@ DrawPaddles endp
 
 DrawScore proc
 	pushad
-	 
+
 	 .IF(P2Score == MaxScore || P1Score == MaxScore)		; Should end the game once a player reaches the MaxScore
 		mov EndGame, 1
 	 .ENDIF
-	 
+
 	 xor edx, edx
 	 mov dl, RightBorder
 	 add dl, 5
 	 mov dh, BottomBorder
 	 call gotoxy
-	 
+
 	 movzx eax, P1Score
 	 movzx ebx, P2Score
 	 push ebx
@@ -285,7 +283,7 @@ DrawScore endp
 BallMath proc
 	;PADDLE COLLISION LOGIC---------------------------------------
 	; Scoring logic and detecting collision to the wall
-	.IF (TheBall.XCoord == LeftBorder)					
+	.IF (TheBall.XCoord == LeftBorder)
 		inc P2Score
 		mov TheBall.XCoord, StartX
 		mov TheBall.YCoord, StartY
@@ -295,7 +293,7 @@ BallMath proc
 		mov TheBall.XCoord, StartX
 		mov TheBall.YCoord, StartY
 	.ENDIF
-	
+
 	;LEFT--------------
 	;If the ball is in front of the left paddle
 	mov al, LPBorder
@@ -338,15 +336,15 @@ BallMath proc
 		mov TheBall.Rise, -1
 	.ENDIF
 	;END PADDLE COLLISION LOGIC---------------------------------------
-	
+
 	mov al, TheBall.YCoord
 	add al, TheBall.Rise
 	mov TheBall.YCoord, al
-	
+
 	mov al, TheBall.XCoord
 	add al, TheBall.Run
 	mov TheBall.XCoord, al
-	
+
 	ret
 BallMath endp
 
@@ -354,16 +352,16 @@ BallMath endp
 DrawBall proc
 	pushad
 	xor edx, edx
-	
+
 	;Erase the ball
 	mov dl, TheBall.XCoord
 	mov dh, TheBall.YCoord
 	call gotoxy
 	mov al, " "
 	call WriteChar
-	
+
 	call BallMath
-	
+
 	mov dl, TheBall.XCoord
 	mov dh, TheBall.YCoord
 	call gotoxy
@@ -381,11 +379,11 @@ DrawBoard proc
 	mov dl, 0											;initial x value is 0
 	mov dh, 0											;initial y value is 0
 	call gotoxy											;set the cursor position to the xy position
-	
+
 	;First loop is rows
 	;Second loop is columns
 	mov ecx, YCoords + 1
-	
+
 	L1:
 		push ecx
 		mov ecx, XCoords + 1
@@ -403,17 +401,17 @@ DrawBoard proc
 				mov al, " "
 				call WriteChar
 			.ENDIF
-			
+
 			inc dl
 			call gotoxy
 		Loop L2
-		
+
 		mov dl, 0
 		inc dh
 		call gotoxy
 		pop ecx
 	Loop L1
-	
+
 	call SetColorBW
 	call SetCursorToRead
 
@@ -461,7 +459,7 @@ PaddleLogic proc
 			.ENDIF
 		Loop L1
 	.ENDIF
-	
+
 	popad
 	ret
 PaddleLogic endp
@@ -471,7 +469,7 @@ PongMain proc C
 	call DrawBoard
 	call DrawPaddles
 	call DrawBall
-	
+
 	L1:
 		call DrawBall
 		call PaddleLogic
@@ -489,12 +487,12 @@ PongMain proc C
 			pop ecx
 		Loop L2
 		.IF (EndGame == 1)					; This will end the game and exit the loop for now
-			jmp GameOver 					
+			jmp GameOver
 		.ENDIF
 	Loop L1
-	
+
 	GameOver:
-	
+
 
 	ret
 PongMain endp
